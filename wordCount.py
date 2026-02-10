@@ -57,10 +57,20 @@ def write_results_posix(out_path: str, counts: dict[str, int]) -> None:
     try:
         #alphabetical sort by word kv[0]
         items = sorted(counts.items(), key=lambda kv: kv[0])
-        #write word count per line
+        
+        buf = bytearray()
+        FLUSH_LIMIT = 64 * 1024 
+
         for word, c in items:
-            line = f"{word} {c}\n".encode("utf-8")
-            os.write(fd, line)
+            buf.extend(f"{word} {c}\n".encode("utf-8"))
+
+            if len(buf) >= FLUSH_LIMIT:
+                os.write(fd, buf)
+                buf.clear
+
+        if buf:
+            os.write(fd, buf)
+
     finally:
         os.close(fd)
 
